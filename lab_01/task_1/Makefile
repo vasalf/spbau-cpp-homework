@@ -12,7 +12,7 @@ lab1: $(OBJS)
 bin:
 	mkdir -p bin
 
-bin/%.o: src/%.c Makefile bin
+bin/%.o: src/%.c Makefile | bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
