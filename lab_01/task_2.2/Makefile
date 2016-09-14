@@ -3,6 +3,7 @@ CFLAGS=-Wall -Wextra -Wshadow -Wimplicit -I./include
 
 SRCS=$(wildcard ./src/*.c)
 OBJS=$(foreach s,$(SRCS:.c=.o),$(subst src,bin,$(s)))
+HEADERS=$(wildcard ./include/*.h)
 
 all: lab1
 
@@ -12,7 +13,7 @@ lab1: $(OBJS)
 bin:
 	mkdir -p bin
 
-bin/%.o: src/%.c Makefile | bin
+bin/%.o: src/%.c Makefile $(HEADERS) | bin
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
