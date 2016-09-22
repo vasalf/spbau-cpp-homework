@@ -48,7 +48,8 @@ size_t strlen(const char *str) {
 }
 
 char *strcat(char *destination, const char *source) {
-    return strcpy(destination + strlen(destination), source);
+    strcpy(destination + strlen(destination), source);
+    return destination;
 }
 
 int strcmp(const char *str1, const char *str2) {
