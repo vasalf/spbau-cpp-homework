@@ -118,5 +118,7 @@ int main(__attribute__((unused)) int argc, char **argv) {
     else
         count(l);
 
+    remove_all(l); 
+
     return 0;
 }
