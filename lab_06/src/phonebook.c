@@ -55,7 +55,6 @@ static void handle_data(_unused void *data, const char *content, int length) {
 
     int j = 0;
     for (; j < 10 && phb->humans[phb->size - 1].phones[j][0] != 0; j++);
-    fprintf(stderr, "handle: %s\n", tmp);
     strcpy(phb->humans[phb->size - 1].phones[j], tmp);
 
     free(tmp);
