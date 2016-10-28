@@ -8,9 +8,8 @@
 
 #define _unused __attribute__((unused))
 
-static phonebook_t *now_parsing;
-
-static void start_element(_unused void *data, const char *element, const char **attribute) {
+static void start_element(void *data, const char *element, const char **attribute) {
+    phonebook_t *now_parsing = (phonebook_t*) data;
     if (strcmp(element, "phonebook") == 0) {
         return;
     } else if (strcmp(element, "human") == 0) {
@@ -45,10 +44,10 @@ static void end_element(_unused void *data, _unused const char *element) {
     return;
 }
 
-static void handle_data(_unused void *data, const char *content, int length) {
+static void handle_data(void *data, const char *content, int length) {
+    phonebook_t *phb = (phonebook_t*)data;
     if (content[0] < '0' || content[0] > '9')
         return;
-    phonebook_t *phb = now_parsing;
     char *tmp = malloc(length + 1);
     strncpy(tmp, content, length);
     tmp[length] = '\0';
@@ -72,7 +71,6 @@ int load_phonebook_xml(const char *filename, phonebook_t *book) {
     char buf[buf_sz];
 
     init_phonebook_s(book);
-    now_parsing = book;
 
     FILE *fp;
     fp = fopen(filename, "r");
@@ -84,6 +82,7 @@ int load_phonebook_xml(const char *filename, phonebook_t *book) {
     XML_Parser parser = XML_ParserCreate(NULL);
     XML_SetElementHandler(parser, start_element, end_element);
     XML_SetCharacterDataHandler(parser, handle_data);
+    XML_SetUserData(parser, book);
 
     memset(buf, 0, buf_sz);
     
@@ -107,11 +106,11 @@ int load_phonebook_xml(const char *filename, phonebook_t *book) {
 
 void print_phonebook(phonebook_t *book) {
     printf("%lu\n", book->size);
-    for (int i = 0; i < (int)book->size; i++) {
+    for (int i = book->size - 1; i >= 0; i--) {
         printf("name: %s\n", book->humans[i].name);
         printf("middle name: %s\n", book->humans[i].middle_name);
         printf("family name: %s\n", book->humans[i].family_name);
-        for (int j = 0; book->humans[i].phones[j][0] != 0; j++) {
+        for (int j = 0; j < 10 && book->humans[i].phones[j][0] != 0; j++) {
             printf("phone: %s\n", book->humans[i].phones[j]);
         }
         printf("\n");
