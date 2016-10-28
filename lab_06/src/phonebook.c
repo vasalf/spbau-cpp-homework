@@ -67,6 +67,11 @@ static void init_phonebook_s(phonebook_t *phb) {
 
 const int buf_sz = 256000;
 
+int compare_humans(const void *a, const void *b) {
+    const human_t *f = a, *s = b;
+    return strcmp(f->family_name, s->family_name);
+}
+
 int load_phonebook_xml(const char *filename, phonebook_t *book) {
     char buf[buf_sz];
 
@@ -101,12 +106,14 @@ int load_phonebook_xml(const char *filename, phonebook_t *book) {
     XML_ParserFree(parser);
     fclose(fp);
 
+    qsort(book->humans, book->size, sizeof(human_t), compare_humans);
+
     return 0;
 }
 
 void print_phonebook(phonebook_t *book) {
     printf("%lu\n", book->size);
-    for (int i = book->size - 1; i >= 0; i--) {
+    for (size_t i = 0; i < book->size; i++) {
         printf("name: %s\n", book->humans[i].name);
         printf("middle name: %s\n", book->humans[i].middle_name);
         printf("family name: %s\n", book->humans[i].family_name);
