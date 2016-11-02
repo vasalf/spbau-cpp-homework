@@ -10,7 +10,7 @@ MyVector::MyVector(std::size_t init_capacity) : _sz(0), _cp(init_capacity) {
 }
 
 MyVector::~MyVector() {
-    delete _data;
+    delete[] _data;
 }
 
 void MyVector::set(std::size_t index, int value) {
@@ -34,7 +34,7 @@ void MyVector::reserve(std::size_t new_capacity) {
         return;
     int *new_data = new int[new_capacity];
     std::copy(_data, _data + _sz, new_data);
-    delete _data;
+    delete[] _data;
     _data = new_data;
     _cp = new_capacity;
 }
