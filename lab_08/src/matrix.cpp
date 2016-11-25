@@ -17,6 +17,7 @@ Matrix::Matrix(std::size_t r, std::size_t c) {
 }
 
 Matrix::Matrix(const Matrix &object) {
+    _data = NULL;
     *this = object;
 }
 
@@ -35,7 +36,7 @@ Matrix& Matrix::operator=(const Matrix &object) {
             set(i, j, object.get(i, j));
         }
     }
-    if (this != &object) {
+    if (old_data != NULL && this != &object) {
         for (std::size_t i = 0; i < old_rows; i++)
             delete[] old_data[i];
         delete[] old_data;

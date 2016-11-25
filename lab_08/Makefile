@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -Wshadow -Wimplicit -O2 -std=c11 -I./include
 CXX=g++
-CXXFLAGS=-Wall -Wextra -Wshadow -O2 -std=c++0x -I./include 
+CXXFLAGS=-Wall -Wextra -Wshadow -O2 -std=c++0x -g -I./include 
 LD=$(CXX)
 LDFLAGS=
 
