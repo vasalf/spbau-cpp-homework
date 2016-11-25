@@ -20,6 +20,12 @@ Matrix::Matrix(const Matrix &object) {
     *this = object;
 }
 
+Matrix::~Matrix() {
+    for (std::size_t i = 0; i < _rows; i++)
+        delete[] _data[i];
+    delete[] _data;
+}
+
 Matrix& Matrix::operator=(const Matrix &object) {
     int **old_data = _data;
     std::size_t old_rows = _rows;

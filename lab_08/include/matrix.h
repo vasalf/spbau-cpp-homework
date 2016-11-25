@@ -8,6 +8,7 @@ class Matrix {
 public:
     Matrix(std::size_t r, std::size_t c);
     Matrix(const Matrix &object);
+    ~Matrix();
     Matrix& operator=(const Matrix &object);
 
     std::size_t get_rows() const;
