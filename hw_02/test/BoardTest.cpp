@@ -57,6 +57,16 @@ void BoardTest::testCannotMove2() {
     DO_CHECK(!b.canMove(9, 9, 'O'));
 }
 
+void BoardTest::testCanMoveOutOfBounds() {
+    Board b;
+    DO_CHECK(!b.canMove(-1, 0, 'O'));
+    DO_CHECK(!b.canMove(0, -1, 'O'));
+    DO_CHECK(!b.canMove(-1,-1, 'O'));
+    DO_CHECK(!b.canMove(0, 10, 'O'));
+    DO_CHECK(!b.canMove(10, 0, 'O'));
+    DO_CHECK(!b.canMove(100500, 1791791791, 'O'));
+}
+
 void BoardTest::testMove1() {
     Board b;
     b.move(0, 0, 'O');
@@ -82,6 +92,7 @@ void BoardTest::runAllTests() {
     testCanMove();
     testCannotMove1();
     testCannotMove2();
+    testCanMoveOutOfBounds();
     testMove1();
     testMove2();
     testMove3();

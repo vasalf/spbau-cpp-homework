@@ -14,6 +14,7 @@ class BoardTest : public Test {
     void testCanMove();
     void testCannotMove1();
     void testCannotMove2();
+    void testCanMoveOutOfBounds();
 
     void testMove1();
     void testMove2();

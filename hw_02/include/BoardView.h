@@ -5,6 +5,7 @@
 
 class View {
     Board& _board;
+    bool end = false;
     void doTurn(char who);
   public:
     View(Board& board);
