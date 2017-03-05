@@ -76,6 +76,7 @@ my_vector<T>& my_vector<T>::operator=(my_vector<T> other) {
 template<class T>
 my_vector<T>::~my_vector() {
     delete[] array_;
+    array_ = NULL;
 }
 
 template<class T>
