@@ -78,6 +78,8 @@ Developer::Developer(const Developer& other) {
 }
 
 Developer& Developer::operator=(Developer other) {
+    if (_name)
+        this->~Developer();
     std::swap(_name, other._name);
     std::swap(_base_salary, other._base_salary);
     std::swap(_has_bonus, other._has_bonus);
@@ -85,13 +87,14 @@ Developer& Developer::operator=(Developer other) {
 }
 
 int Developer::salary() const {
-    int current_salary = _base_salary;
-    if (_has_bonus) { current_salary += 1000; }
-    return current_salary;
+    int salary = _base_salary;
+    if (_has_bonus) { salary += 1000; }
+    return salary;
 }
 
 Developer::~Developer() {
     delete[] _name;
+    _name = nullptr;
 }
 
 void SalesManager::print(std::ostream& os) const {
@@ -127,6 +130,8 @@ SalesManager::SalesManager(const SalesManager& other) {
 }
 
 SalesManager& SalesManager::operator=(SalesManager other) {
+    if (_name)
+        this->~SalesManager();
     std::swap(_name, other._name);
     std::swap(_base_salary, other._base_salary);
     std::swap(_sold_nm, other._sold_nm);
@@ -138,7 +143,7 @@ void SalesManager::print_console(std::ostream& os) const {
     os << "Sales Manager" << std::endl;
     os << "Name: " << _name << std::endl;
     os << "Base Salary: " << _base_salary << std::endl;
-    os << "Sold items: " << _sold_nm << std::endl;
+    os << "Sold Items: " << _sold_nm << std::endl;
     os << "Item price: " << _price;
 }
 
@@ -156,6 +161,7 @@ int SalesManager::salary() const {
 
 SalesManager::~SalesManager() {
     delete[] _name;
+    _name = 0;
 }
 
 EmployeesArray::EmployeesArray() {
@@ -199,7 +205,7 @@ int EmployeesArray::total_salary() const {
 
 void EmployeesArray::print_console(std::ostream& os) const {
     for (std::size_t i = 0; i != _size; i++) {
-        os << i + 1 << ". ";
+        os << i + 1 << ": ";
         _employees[i]->print_console(os);
         os << std::endl;
     }
