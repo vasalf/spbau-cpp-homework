@@ -97,8 +97,9 @@ bool my_vector<T>::empty() const {
 template<class T>
 void my_vector<T>::resize(size_t n) {
     if (n < size_)
-        for (T* it = array_ + n; it != array_ + size_; it++)
-            it->~T();
+        for (T* it = array_ + n; it != array_ + size_; it++) {
+            *it = T();
+        }
     reserve(n);
     size_ = n;
 }
