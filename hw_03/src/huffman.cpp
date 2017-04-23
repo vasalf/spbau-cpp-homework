@@ -193,6 +193,7 @@ void HuffmanArchiveCreator::load_file(std::string filename) {
     std::vector<uint8_t> vec(max_file_size);
     std::size_t sz = file.read(reinterpret_cast<char *>(vec.data()), max_file_size).gcount();
     vec.resize(sz);
+    std::cout << sz << std::endl;
     huffman_tree_.reset(new HuffmanTree(vec));
     std::size_t shift = 0;
     out_bytes.push_back(0);
@@ -216,6 +217,10 @@ void HuffmanArchiveCreator::load_file(std::string filename) {
             }
         }
     }
+    if (shift == 0) {
+        out_bytes.pop_back();
+        shift = 8;
+    }
     last_shift = shift;
 }
 
@@ -224,6 +229,7 @@ void HuffmanArchiveCreator::write_file(std::string filename) {
     huffman_tree_->write_to_file(file);
     uint8_t casted_shift = last_shift;
     file.write(reinterpret_cast<char *>(&casted_shift), 1);
+    std::cout << out_bytes.size() << std::endl << file.tellp() << std::endl;
     file.write(reinterpret_cast<char *>(out_bytes.data()), out_bytes.size());
 }
 
@@ -234,9 +240,11 @@ void HuffmanArchiveExtractor::load_file(std::string filename) {
     huffman_tree_.reset(new HuffmanTree(file));
     uint8_t last_shift;
     file.read(reinterpret_cast<char *>(&last_shift), 1);
+    std::size_t extra = file.tellg();
     std::vector<uint8_t> vec(max_file_size);
     std::size_t sz = file.read(reinterpret_cast<char *>(vec.data()), max_file_size).gcount();
     vec.resize(sz);
+    std::cout << sz << std::endl;
     std::size_t i = 0, shift = 0;
     TreeNode *node = huffman_tree_->root();
     while (i + 1 < vec.size() || shift < last_shift) {
@@ -247,11 +255,15 @@ void HuffmanArchiveExtractor::load_file(std::string filename) {
         node = node->go((vec[i] >> (7 - shift)) & 1);
         shift++;
         if (shift == 8) {
+            if (shift == last_shift && i + 1 == vec.size())
+                break;
             i++;
             shift = 0;
         }
     }
     stored_bytes.push_back(node->end_of_char());
+    std::cout << stored_bytes.size() << std::endl;
+    std::cout << extra << std::endl;
 }
 
 void HuffmanArchiveExtractor::write_file(std::string filename) {
