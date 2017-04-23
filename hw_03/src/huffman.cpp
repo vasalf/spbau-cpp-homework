@@ -56,15 +56,12 @@ void HuffmanTree::build_tree_from_frequency_array(int freq[]) {
         pq.pop();
         auto q = pq.top();
         pq.pop();
-        //std::cout << "joined " << p.second << " and " << q.second << std::endl;
         joined_pairs.push_back(std::make_pair(p.second, q.second));
         pq.push(std::make_pair(p.first + q.first, p.second));
     }
     std::reverse(joined_pairs.begin(), joined_pairs.end());
     answers[pq.top().second] = root_;
-    //std::cout << pq.top().second  << " is on the top" << std::endl;
     for (std::pair<uint8_t, uint8_t> p : joined_pairs) {
-        //std::cout << "disjoin " << p.first << " and " << p.second << std::endl;
         TreeNode *new_left_node = new InnerTreeNode(answers[p.first]);
         TreeNode *new_right_node = new InnerTreeNode(answers[p.first]);
         answers[p.first]->go(0) = new_left_node;
@@ -84,13 +81,15 @@ void HuffmanTree::build_tree_from_frequency_array(int freq[]) {
     }
 }
 
-void HuffmanTree::write_symbol_codes(TreeNode *node, uint8_t path, std::size_t len) {
+void HuffmanTree::write_symbol_codes(TreeNode *node, std::bitset<256> path, std::size_t len) {
     if (node->is_terminal()) {
         symbol_codes_[node->end_of_char()] = path;
         symbol_length_[node->end_of_char()] = len;
     } else {
         write_symbol_codes(node->go(0), path << 1, len + 1);
-        write_symbol_codes(node->go(1), (path << 1) | 1, len + 1);
+        std::bitset<256> npath = path << 1;
+        npath[0] = true;
+        write_symbol_codes(node->go(1), npath, len + 1);
     }
 }
 
@@ -110,16 +109,16 @@ HuffmanTree::HuffmanTree(std::vector<uint8_t> bytes) {
     for (uint8_t byte: bytes)
         freq[byte]++;
     build_tree_from_frequency_array(freq);
-    write_symbol_codes(root_, 0, 0);
+    write_symbol_codes(root_, std::bitset<256>(), 0);
 }
 
-TreeNode *HuffmanTree::add_path(TreeNode *node, uint8_t symbol, uint8_t code, std::size_t bit, std::size_t len) {
+TreeNode *HuffmanTree::add_path(TreeNode *node, uint8_t symbol, std::bitset<256> code, std::size_t bit, std::size_t len) {
     if (bit == len) {
         TreeNode *new_node = new TerminalTreeNode(symbol, node->parent());
         delete node;
         return new_node;
     } else {
-        TreeNode*& next_node = node->go((code >> (len - bit - 1)) & 1);
+        TreeNode*& next_node = node->go((code >> (len - bit - 1))[0]);
         if (next_node == nullptr)
             next_node = new InnerTreeNode(node);
         next_node = add_path(next_node, symbol, code, bit + 1, len);
@@ -130,30 +129,38 @@ TreeNode *HuffmanTree::add_path(TreeNode *node, uint8_t symbol, uint8_t code, st
 HuffmanTree::HuffmanTree(std::ifstream& stream) {
     root_ = new InnerTreeNode(nullptr);
     for (std::size_t i = 0; i <= std::numeric_limits<uint8_t>::max(); i++) {
-        uint8_t len, code;
+        uint8_t len; std::bitset<256> code;
         stream.read(reinterpret_cast<char *>(&len), 1);
-        stream.read(reinterpret_cast<char *>(&code), 1);
-        if (len != 0xff)
+        if (len != 0xff) {
+            std::unique_ptr<uint8_t[]> to_read(new uint8_t[(len + 7) / 8]);
+            stream.read(reinterpret_cast<char *>(to_read.get()), (len + 7) / 8);
+            for (std::size_t j = 0; j < len; j++)
+                code |= ((to_read.get()[j / 8] >> (j % 8)) << j);
             root_ = add_path(root_, i, code, 0, len);
+        }
     }
-    write_symbol_codes(root_, 0, 0);
+    write_symbol_codes(root_, std::bitset<256>(), 0);
 }
-
-/* 2 bytes for each of 256 symbols: length and code */
 
 void HuffmanTree::write_to_file(std::ofstream& stream) {
     for (std::size_t i = 0; i <= std::numeric_limits<uint8_t>::max(); i++) {
-        if (symbol_length_[i] > 0)
+        if (symbol_length_[i] > 0) {
             stream.write(reinterpret_cast<char *>(&symbol_length_[i]), 1);
-        else {
+            std::unique_ptr<uint8_t[]> to_write(new uint8_t[(symbol_length_[i] + 7) / 8]);
+            for (std::size_t j = 0; j < (symbol_length_[i] + 7) / 8; j++) {
+                to_write.get()[j] = 0;
+                for (int k = 0; k < 8; k++)
+                    to_write.get()[j] |= (symbol_codes_[i][j * 8 + k]) << k;
+            }
+            stream.write(reinterpret_cast<char *>(to_write.get()), (symbol_length_[i] + 7) / 8);
+        } else {
             uint8_t tmp = 0xff;
             stream.write(reinterpret_cast<char *>(&tmp), 1);
         }
-        stream.write(reinterpret_cast<char *>(&symbol_codes_[i]), 1);
     }
 }
 
-uint8_t HuffmanTree::get_symbol_code(uint8_t symbol) {
+std::bitset<256> HuffmanTree::get_symbol_code(uint8_t symbol) {
     return symbol_codes_[symbol];
 }
 
@@ -171,26 +178,42 @@ HuffmanTree::~HuffmanTree() {
 
 HuffmanArchiveCreator::HuffmanArchiveCreator() {}
 
-const std::size_t max_file_size = 5 * 1024 * 1024;
+const std::size_t max_file_size = 10 * 1024 * 1024;
+
+template<size_t bitset_sz>
+uint8_t get_first_bits(const std::bitset<bitset_sz> &bs) {
+    uint8_t ans = 0;
+    for (int i = 0; i < 8; i++)
+        ans |= bs[i] << i;
+    return ans;
+}
 
 void HuffmanArchiveCreator::load_file(std::string filename) {
     std::ifstream file(filename);
     std::vector<uint8_t> vec(max_file_size);
-    std::size_t sz = file.readsome(reinterpret_cast<char *>(vec.data()), max_file_size);
+    std::size_t sz = file.read(reinterpret_cast<char *>(vec.data()), max_file_size).gcount();
     vec.resize(sz);
     huffman_tree_.reset(new HuffmanTree(vec));
     std::size_t shift = 0;
     out_bytes.push_back(0);
     for (uint8_t byte : vec) {
-        uint8_t code = huffman_tree_->get_symbol_code(byte);
+        std::bitset<256> code = huffman_tree_->get_symbol_code(byte);
         std::size_t len = huffman_tree_->get_symbol_length(byte);
-        if (shift + len < 8) {
-            out_bytes.back() |= (code << (8 - shift - len));
-            shift += len;
-        } else {
-            out_bytes.back() = (out_bytes.back() | (code >> (8 - shift))) & 0xff;
-            out_bytes.push_back((code << (16 - len - shift)) & 0xff);
-            shift = (shift + len - 8);
+        while (len > 0) {
+            if (shift + len < 8) {
+                out_bytes.back() |= get_first_bits(code) << (8 - shift - len);
+                shift += len;
+                len = 0;
+            } else if (shift > 0) {
+                out_bytes.back() |= get_first_bits(code >> (len - (8 - shift)));
+                out_bytes.push_back(0);
+                len -= 8 - shift;
+                shift = 0;
+            } else {
+                out_bytes.back() = get_first_bits(code >> (len - 8));
+                out_bytes.push_back(0);
+                len -= 8;
+            }
         }
     }
     last_shift = shift;
@@ -207,12 +230,12 @@ void HuffmanArchiveCreator::write_file(std::string filename) {
 HuffmanArchiveExtractor::HuffmanArchiveExtractor() {}
 
 void HuffmanArchiveExtractor::load_file(std::string filename) {
-    std::ifstream file(filename);
+    std::ifstream file(filename, std::ios::binary);
     huffman_tree_.reset(new HuffmanTree(file));
     uint8_t last_shift;
     file.read(reinterpret_cast<char *>(&last_shift), 1);
-    std::vector<uint8_t> vec(513 + max_file_size);
-    std::size_t sz = file.readsome(reinterpret_cast<char *>(vec.data()), 513 + max_file_size);
+    std::vector<uint8_t> vec(max_file_size);
+    std::size_t sz = file.read(reinterpret_cast<char *>(vec.data()), max_file_size).gcount();
     vec.resize(sz);
     std::size_t i = 0, shift = 0;
     TreeNode *node = huffman_tree_->root();

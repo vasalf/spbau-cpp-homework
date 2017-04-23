@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <string>
+#include <iostream>
 
 enum operation_t {
     CONSTRUCT,
@@ -13,15 +14,15 @@ int main(int argc, char *argv[]) {
     operation_t operation = operation_t::UNKNOWN;
     std::string in_file, out_file;
 
-    for (int i = 0; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (std::strcmp(argv[i], "-c") == 0)
             operation = operation_t::CONSTRUCT;
         else if (std::strcmp(argv[i], "-u") == 0)
             operation = operation_t::EXTRACT;
         else if (std::strcmp(argv[i], "-f") == 0)
-            in_file = argv[i++];
+            in_file = argv[++i];
         else
-            out_file = argv[i++];
+            out_file = argv[++i];
     }
 
     if (operation == operation_t::CONSTRUCT) {

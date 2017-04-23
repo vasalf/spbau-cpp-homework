@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <fstream>
+#include <bitset>
 
 class TreeNode {
     TreeNode *par_;
@@ -38,12 +39,12 @@ public:
 
 class HuffmanTree {
     TreeNode *root_;
-    std::map<uint8_t, uint8_t> symbol_codes_;
+    std::map<uint8_t, std::bitset<256> > symbol_codes_;
     std::map<uint8_t, std::size_t> symbol_length_;
     void build_tree_from_frequency_array(int freq[]);
     void recursively_delete_nodes(TreeNode *node);
-    void write_symbol_codes(TreeNode *node, uint8_t path, std::size_t len);
-    TreeNode *add_path(TreeNode *node, uint8_t symbol, uint8_t code, std::size_t bit, std::size_t len);
+    void write_symbol_codes(TreeNode *node, std::bitset<256> path, std::size_t len);
+    TreeNode *add_path(TreeNode *node, uint8_t symbol, std::bitset<256> code, std::size_t bit, std::size_t len);
 public:
     HuffmanTree(const HuffmanTree& other) = delete;
     HuffmanTree& operator=(HuffmanTree other) = delete;
@@ -51,7 +52,7 @@ public:
     // Reads a header from file
     HuffmanTree(std::ifstream& stream);
     void write_to_file(std::ofstream& stream);
-    uint8_t get_symbol_code(uint8_t symbol);
+    std::bitset<256> get_symbol_code(uint8_t symbol);
     std::size_t get_symbol_length(uint8_t symbol);
     TreeNode *root() const;
     ~HuffmanTree();
