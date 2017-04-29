@@ -28,7 +28,7 @@ public:
 private:
     size_t capacity_;
     size_t size_;
-    T* array_;
+    uint8_t* array_;
 };
 
 template<class T>
@@ -44,7 +44,7 @@ std::ostream& operator<<(std::ostream& os, const my_vector<T>& v) {
 template<class T>
 my_vector<T>::my_vector() {
     capacity_ = 1;
-    array_ = new T[1];
+    array_ = new uint8_t[sizeof(T)];
     size_ = 0;
 }
 
@@ -53,15 +53,17 @@ my_vector<T>::my_vector(size_t n) {
     capacity_ = std::max((size_t)1, n);
     while (capacity_ & (capacity_ - 1))
         capacity_++;
-    array_ = new T[capacity_];
+    array_ = new uint8_t[capacity_ * sizeof(T)];
     size_ = n;
+    for (size_t i = 0; i < size_; i++)
+        new (array_ + i * sizeof(T))T();
 }
 
 template<class T>
 my_vector<T>::my_vector(const my_vector<T>& other) {
     capacity_ = other.capacity_;
     size_ = other.size_;
-    array_ = new T[capacity_];
+    array_ = new uint8_t[capacity_ * sizeof(T)];
     std::copy(other.array_, other.array_ + size_, array_);
 }
 
@@ -76,7 +78,6 @@ my_vector<T>& my_vector<T>::operator=(my_vector<T> other) {
 template<class T>
 my_vector<T>::~my_vector() {
     delete[] array_;
-    array_ = NULL;
 }
 
 template<class T>
@@ -97,10 +98,11 @@ bool my_vector<T>::empty() const {
 template<class T>
 void my_vector<T>::resize(size_t n) {
     if (n < size_)
-        for (T* it = array_ + n; it != array_ + size_; it++) {
-            *it = T();
-        }
+        for (uint8_t *it = array_ + n * sizeof(T); it != array_ + size_ * sizeof(T); it += sizeof(T))
+            reinterpret_cast<T*>(it)->~T();
     reserve(n);
+    for (size_t i = size_; i < n; i++)
+        new (array_ + i * sizeof(T))T();
     size_ = n;
 }
 
@@ -110,8 +112,12 @@ void my_vector<T>::reserve(size_t n) {
     if (n > capacity_) {
         while (n & (n - 1))
             n++;
-        T* new_array = new T[n];
-        std::copy(array_, array_ + size_, new_array);
+        uint8_t* new_array = new uint8_t[n * sizeof(T)];
+        for (size_t i = 0; i < size_; i++)
+            new (new_array + i * sizeof(T))T(*reinterpret_cast<T*>(array_ + i * sizeof(T)));
+        std::copy(reinterpret_cast<T*>(array_),
+                  reinterpret_cast<T*>(array_) + size_,
+                  reinterpret_cast<T*>(new_array));
         delete[] array_;
         array_ = new_array;
         capacity_ = n;
@@ -120,18 +126,18 @@ void my_vector<T>::reserve(size_t n) {
 
 template<class T>
 T& my_vector<T>::operator[](size_t index) {
-    return array_[index];
+    return reinterpret_cast<T*>(array_)[index];
 }
 
 template<class T>
 const T& my_vector<T>::operator[](size_t index) const {
-    return array_[index];
+    return reinterpret_cast<T*>(array_)[index];
 }
 
 template<class T>
 void my_vector<T>::push_back(const T& t) {
     reserve(size_ + 1);
-    array_[size_++] = t;
+    new (array_ + (size_++) * sizeof(T))T(t);
 }
 
 template<class T>
