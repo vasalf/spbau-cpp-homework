@@ -42,6 +42,6 @@ bin/%.o: test/%.cpp Makefile $(TEST_HEADERS) | bin
 
 clean:
 	rm -Rf bin $(TARGET) $(TEST_TARGET)
-	rm manual_tests/*.huf manual_tests/*.res
+	rm -f manual_tests/*.huf manual_tests/*.res
 
 .PHONY: all test_huffman clean

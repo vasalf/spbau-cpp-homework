@@ -5,6 +5,7 @@
 #include <limits>
 #include <vector>
 #include <queue>
+#include <sstream>
 #include <algorithm>
 
 TreeNode::TreeNode(TreeNode *par) : par_(par) {}
@@ -198,6 +199,8 @@ uint8_t get_first_bits(const std::bitset<bitset_sz> &bs) {
 
 void HuffmanArchiveCreator::load_file(std::string filename) {
     std::ifstream file(filename);
+    if (!file)
+        throw InputOutputException(filename, false);
     std::vector<uint8_t> vec(max_file_size);
     std::size_t sz = file.read(reinterpret_cast<char *>(vec.data()), max_file_size).gcount();
     vec.resize(sz);
@@ -234,6 +237,8 @@ void HuffmanArchiveCreator::load_file(std::string filename) {
 
 void HuffmanArchiveCreator::write_file(std::string filename) {
     std::ofstream file(filename);
+    if (!file)
+        throw InputOutputException(filename, true);
     huffman_tree_->write_to_file(file);
     uint8_t casted_shift = last_shift;
     file.write(reinterpret_cast<char *>(&casted_shift), 1);
@@ -245,6 +250,8 @@ HuffmanArchiveExtractor::HuffmanArchiveExtractor() {}
 
 void HuffmanArchiveExtractor::load_file(std::string filename) {
     std::ifstream file(filename, std::ios::binary);
+    if (!file)
+        throw InputOutputException(filename, false);
     huffman_tree_.reset(new HuffmanTree(file));
     uint8_t last_shift;
     file.read(reinterpret_cast<char *>(&last_shift), 1);
@@ -279,5 +286,22 @@ void HuffmanArchiveExtractor::load_file(std::string filename) {
 
 void HuffmanArchiveExtractor::write_file(std::string filename) {
     std::ofstream file(filename);
+    if (!file)
+        throw InputOutputException(filename, true);
     file.write(reinterpret_cast<char *>(stored_bytes.data()), stored_bytes.size());
+}
+
+InputOutputException::InputOutputException(std::string filename, bool writing) {
+    filename_ = filename;
+    writing_ = writing;
+}
+
+std::string InputOutputException::message() {
+    std::stringstream ans;
+    ans << "Couldn't open file " << filename_ << " for ";
+    if (writing_)
+        ans << "writing.";
+    else
+        ans << "reading.";
+    return ans.str();
 }

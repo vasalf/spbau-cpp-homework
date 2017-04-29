@@ -76,3 +76,11 @@ public:
     void load_file(std::string filename);
     void write_file(std::string filename);
 };
+
+class InputOutputException {
+    std::string filename_;
+    bool writing_;
+public:
+    InputOutputException(std::string filename, bool writing);
+    std::string message();
+};
