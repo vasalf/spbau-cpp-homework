@@ -31,7 +31,7 @@ public:
 class TerminalTreeNode : public TreeNode {
     uint8_t ends_here_;
 public:
-    TerminalTreeNode(char ends_here, TreeNode *par);
+    TerminalTreeNode(uint8_t ends_here, TreeNode *par);
     virtual bool is_terminal() const;
     virtual uint8_t end_of_char() const;
     virtual TreeNode*& go([[gnu::unused]] int bit) { return parent(); }
