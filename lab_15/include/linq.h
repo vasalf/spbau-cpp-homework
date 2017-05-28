@@ -26,7 +26,7 @@ class enumerator {
 public:
     virtual const T& operator*() = 0; // Получает текущий элемент.
     virtual enumerator<T>& operator++() = 0;  // Переход к следующему элементу
-    virtual operator bool() = 0;  // Возвращает true, если есть текущий элемент
+    explicit virtual operator bool() = 0;  // Возвращает true, если есть текущий элемент
 
     auto drop(int count) {
         return drop_enumerator<T>(*this, count);
@@ -89,7 +89,7 @@ public:
         return *this;
     }
 
-    virtual operator bool() {
+    explicit virtual operator bool() {
         return begin_ != end_;
     }
 
@@ -126,12 +126,12 @@ public:
         return ++parent_;
     }
 
-    virtual operator bool() {
+    explicit virtual operator bool() {
         while (count_) {
             count_--;
             ++parent_;
         }
-        return parent_;
+        return (bool)parent_;
     }
 
 private:
@@ -157,8 +157,8 @@ public:
         return *this;
     }
 
-    virtual operator bool() {
-        return count_ && parent_;
+    explicit virtual operator bool() {
+        return count_ && (bool)parent_;
     }
 
 private:
@@ -182,8 +182,8 @@ public:
         return *this;
     }
 
-    virtual operator bool() {
-        return parent_;
+    explicit virtual operator bool() {
+        return (bool)parent_;
     }
 
 private:
@@ -207,8 +207,8 @@ public:
         return *this;
     }
     
-    virtual operator bool() {
-        return parent_ && !func_(*parent_);
+    explicit virtual operator bool() {
+        return (bool)parent_ && !func_(*parent_);
     }
     
 private:
@@ -220,7 +220,7 @@ template<typename T, typename F>
 class where_enumerator : public enumerator<T> {
 public:
     where_enumerator(enumerator<T> &parent, F predicate) : parent_(parent), func_(predicate) {
-        cur_ = parent_ && func_(*parent_);
+        cur_ = (bool)parent_ && func_(*parent_);
     }
 
     virtual const T& operator*() {
@@ -236,12 +236,12 @@ public:
         return *this;
     }
 
-    virtual operator bool() {
+    explicit virtual operator bool() {
         while (parent_ && !cur_) {
             ++parent_;
-            cur_ = parent_ && func_(*parent_);
+            cur_ = (bool)parent_ && func_(*parent_);
         }
-        return parent_;
+        return (bool)parent_;
     }
 private:
     bool cur_;
