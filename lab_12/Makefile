@@ -1,15 +1,21 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -Wshadow -Wimplicit -O2 -std=c11 -I./include
 CXX=g++
-CXXFLAGS=-Wall -Wextra -Wshadow -O2 -std=c++0x -g -I./include 
+CXXFLAGS=-Wall -Wextra -Wshadow -Werror -pedantic -std=c++14 -O2 -I./include
 LD=$(CXX)
 LDFLAGS=
+TEST_LDFLAGS=$(LDFLAGS) -lgtest -lpthread
 
 SUFS=.c .cpp
 SRCS=$(foreach suf,$(SUFS),$(wildcard ./src/*$(suf)))
 OBJS=$(subst src,bin,$(foreach suf,$(SUFS),$(subst $(suf),.o,$(wildcard ./src/*$(suf)))))
-HEADERS=$(wildcard ./include/*.h)
+HEADERS=$(wildcard ./src/*.h)
 TARGET=main
+
+TEST_SRCS=$(foreach suf,$(SUFS),$(wildcard ./test/*$(suf)))
+TEST_OBJS=$(subst test/,bin/,$(foreach suf,$(SUFS),$(subst $(suf),.o,$(wildcard ./test/*$(suf))))) 
+TEST_HEADERS=$(wildcard ./test/*.h)
+TEST_TARGET=test_vector
 
 all: $(TARGET)
 
@@ -25,7 +31,16 @@ bin/%.o: src/%.c Makefile $(HEADERS) | bin
 bin/%.o: src/%.cpp Makefile $(HEADERS) | bin
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-clean:
-	rm -Rf bin $(TARGET)
+$(TEST_TARGET): $(TEST_OBJS)
+	$(LD) $(TEST_OBJS) $(TEST_LDFLAGS) -o $(TEST_TARGET)
 
-.PHONY: all clean
+bin/%.o: test/%.c Makefile $(TEST_HEADERS) | bin
+	$(CC) $(CFLAGS) -c $< -o $@
+
+bin/%.o: test/%.cpp Makefile $(TEST_HEADERS) | bin
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -Rf bin $(TARGET) $(TEST_TARGET)
+
+.PHONY: all $(TEST_TARGET) clean

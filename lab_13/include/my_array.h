@@ -13,6 +13,7 @@ template<typename T, std::size_t N>
 class my_array {
     T _arr[N];
 public:
+    typedef T value_type;
     my_array() {}
     T& at(std::size_t index);
     const T& at(std::size_t index) const;
@@ -65,15 +66,17 @@ void my_array<T, N>::fill(T val) {
 template<std::size_t N>
 class my_array<bool, N> {
     uint8_t _arr[(N + 7) / 8];
+public:
+    typedef bool value_type;
     class bitreference {
         uint8_t *_where;
         size_t _which_bit;
     public:
         bitreference(uint8_t *where, size_t which_bit);
         bitreference& operator=(bool val);
-        operator bool();
+        operator bool() const;
+        bool operator==(const bitreference& other) const;
     };
-public:
     my_array() {}
     bitreference at(std::size_t index);
     bool at(std::size_t index) const;
@@ -85,6 +88,11 @@ public:
 
     void fill(bool val);
 };
+
+template<std::size_t N>
+bool my_array<bool, N>::bitreference::operator==(const typename my_array<bool, N>::bitreference& other) const {
+    return (bool)(*this) == (bool)other;
+}
 
 template<std::size_t N>
 my_array<bool, N>::bitreference::bitreference(uint8_t *where, size_t which_bit) {
@@ -100,7 +108,7 @@ typename my_array<bool, N>::bitreference& my_array<bool, N>::bitreference::opera
 }
 
 template<std::size_t N>
-my_array<bool, N>::bitreference::operator bool() {
+my_array<bool, N>::bitreference::operator bool() const {
     return ((*_where) >> _which_bit) & 1;
 }
 
